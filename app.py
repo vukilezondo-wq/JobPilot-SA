@@ -39,6 +39,7 @@ from review import (
     job_fingerprint, is_duplicate_job, has_existing_application,
     new_review_token, review_link,
 )
+from discovery import search_adzuna
 
 PLANS = {
     'Free': {'limit': 5, 'price': 0},
@@ -169,7 +170,52 @@ with tab_candidate:
 
 with tab_vacancies:
     st.header('Vacancy intake and matching')
-    st.caption('Manual entry is the test harness for this MVP — job-board discovery connectors are the next build step.')
+
+    st.subheader('Search job boards')
+    st.caption(
+        'Uses Adzuna\'s South Africa job search API. Free key: '
+        'register at https://developer.adzuna.com/, then enter your app_id/app_key below.'
+    )
+    s = data['settings']
+    col1, col2 = st.columns(2)
+    s['adzuna_app_id'] = col1.text_input('Adzuna app_id', s.get('adzuna_app_id', ''))
+    s['adzuna_app_key'] = col2.text_input('Adzuna app_key', s.get('adzuna_app_key', ''), type='password')
+    default_what = ', '.join(data['candidate'].get('roles', [])) or 'e.g. product analyst'
+    what = st.text_input('Search for', default_what)
+    where = st.text_input('Location', data['candidate'].get('location', 'South Africa') or 'South Africa')
+
+    if st.button('Search Adzuna'):
+        save(data)
+        try:
+            found = search_adzuna(s['adzuna_app_id'], s['adzuna_app_key'], what, where)
+        except ValueError as e:
+            st.error(str(e))
+            found = []
+        except Exception as e:
+            st.error(f'Search failed: {e}')
+            found = []
+
+        added, skipped = 0, 0
+        for f in found:
+            if is_duplicate_job(data['jobs'], f['title'], f['company'], f['location']):
+                skipped += 1
+                continue
+            fp = job_fingerprint(f['title'], f['company'], f['location'])
+            result = match(data['candidate'], f['spec'], f['title'])
+            job = {
+                'id': fp, 'fingerprint': fp, 'title': f['title'], 'company': f['company'],
+                'location': f['location'], 'source': f['source'], 'url': f['url'],
+                'spec': f['spec'], 'created_at': now(), **result,
+            }
+            data['jobs'].append(job)
+            added += 1
+        if found or added or skipped:
+            save(data)
+            st.success(f'Added {added} new vacancies, skipped {skipped} already in your pipeline.')
+
+    st.markdown('---')
+    st.subheader('Or add a vacancy manually')
+    st.caption('Useful for a specific posting Adzuna doesn\'t carry, e.g. a direct Greenhouse/Lever listing.')
 
     with st.form('add_job'):
         title = st.text_input('Job title')
