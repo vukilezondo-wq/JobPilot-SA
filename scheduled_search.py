@@ -23,11 +23,11 @@ def load_json(path, default):
 
 
 def send_email(subject, body):
-    host = os.environ['SMTP_HOST']
-    port = int(os.environ.get('SMTP_PORT', '587'))
-    user = os.environ['SMTP_USER']
-    password = os.environ['SMTP_PASS']
-    to_addr = os.environ['NOTIFY_EMAIL']
+    host = os.environ['SMTP_HOST'].strip()
+    port = int(os.environ.get('SMTP_PORT', '587').strip())
+    user = os.environ['SMTP_USER'].strip()
+    password = os.environ['SMTP_PASS'].strip()
+    to_addr = os.environ['NOTIFY_EMAIL'].strip()
     msg = MIMEText(body)
     msg['Subject'] = subject
     msg['From'] = formataddr(('JobPilot SA', user))
