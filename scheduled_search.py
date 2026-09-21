@@ -67,6 +67,14 @@ def main():
 
     if not new_matches:
         print('No new matches above the notify threshold today.')
+        try:
+            send_email('JobPilot SA — ran today, no new matches',
+                        'The daily search ran successfully today but found no new matches '
+                        'above the notify threshold. This is a normal confirmation email, '
+                        'not an error — it just means nothing new came up today.')
+            print('Confirmation email sent.')
+        except Exception as e:
+            print(f'Confirmation email failed: {e}')
         return
 
     new_matches.sort(key=lambda j: j['score'], reverse=True)
