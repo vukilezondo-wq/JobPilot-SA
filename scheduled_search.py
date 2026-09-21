@@ -3,6 +3,7 @@ import os
 import smtplib
 from email.mime.text import MIMEText
 from email.utils import formataddr
+from email.utils import formataddr
 from pathlib import Path
 
 from discovery import search_adzuna
@@ -29,7 +30,7 @@ def send_email(subject, body):
     to_addr = os.environ['NOTIFY_EMAIL']
     msg = MIMEText(body)
     msg['Subject'] = subject
-    msg['From'] = user
+    msg['From'] = formataddr(('JobPilot SA', user))
     msg['To'] = to_addr
     with smtplib.SMTP(host, port) as server:
         server.starttls()
