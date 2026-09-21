@@ -1,0 +1,11 @@
+{
+  "name": "Your full name",
+  "email": "you@example.com",
+  "phone": "",
+  "location": "Johannesburg",
+  "roles": ["relationship manager", "escalations"],
+  "skills": ["account management", "quality assurance", "management reporting"],
+  "qualifications": ["insurance industry certificate"],
+  "experience": "Describe your verified experience here — this is used to match and draft, so only put what you can evidence.",
+  "salary": "R360000 per annum"
+}

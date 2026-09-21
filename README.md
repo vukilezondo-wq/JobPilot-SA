@@ -1,4 +1,33 @@
-# JobPilot SA — MVP v2 (safeguard-hardened matching + review engine)
+# JobPilot SA — MVP v4 (adds true daily automation via GitHub Actions)
+
+## What's new in v4 — real automation, no app to open
+The daily search is now genuinely hands-off. `automation/scheduled_search.py`
+runs automatically every day via GitHub Actions
+(`.github/workflows/daily-search.yml`) — it searches Adzuna for your target
+roles, scores results with the exact same `matching.py` logic the app uses,
+skips anything already seen, and **emails you a digest of new matches**.
+Nothing to click, nothing to open.
+
+**One-time setup:**
+1. Edit `automation/candidate_profile.json` in your GitHub repo with your
+   real profile (name, roles, skills, qualifications, experience, location)
+   — this is what the automation matches against, so keep it accurate.
+2. In your repo, go to **Settings → Secrets and variables → Actions** and
+   add these repository secrets:
+   - `ADZUNA_APP_ID`, `ADZUNA_APP_KEY` — your Adzuna credentials
+   - `SMTP_HOST`, `SMTP_PORT` (587 for most providers), `SMTP_USER`,
+     `SMTP_PASS` — an email account to send from. For Gmail: use an
+     [App Password](https://myaccount.google.com/apppasswords), not your
+     normal password.
+   - `NOTIFY_EMAIL` — the address that should receive the daily digest
+3. That's it — it runs automatically at 07:00 SAST every day. You can also
+   trigger it manually any time from the repo's **Actions** tab → "Daily
+   job search" → **Run workflow**, to test it immediately rather than
+   waiting for the schedule.
+
+This still only *finds and scores* jobs — it doesn't submit anything.
+Submission still goes through the app's `CLIENT_REVIEW`/prepared flow,
+exactly as before; this just removes the need to manually search.
 
 ## Run it
 ```
@@ -15,9 +44,24 @@ role and drafted a confidently-overselling cover letter for it; the
 ChatGPT build gave every job a 40% match floor regardless of actual
 overlap. Both are fixed here — see `matching.py` and `factguard.py`.
 
+## What's new in v3
+Vacancy intake is no longer manual-only. The Vacancies tab now has a
+**"Search job boards"** section that calls Adzuna's South Africa job
+search API (`discovery.py`) — a licensed, ToS-compliant data source, not
+scraping — and automatically runs every result through the same matching
+and duplicate-prevention logic as before. Manual paste-in is still there
+underneath, for a specific posting Adzuna doesn't carry (e.g. a direct
+Greenhouse/Lever listing).
+
+You'll need a free Adzuna API key: register at
+https://developer.adzuna.com/, then enter the `app_id`/`app_key` in the
+app's Vacancies tab.
+
 ## Files
 - `app.py` — the Streamlit UI (candidate profile, vacancy intake, application
   engine, client reports, and the client-review link destination).
+- `discovery.py` — automated job search via the Adzuna API. Query results
+  feed straight into `matching.py`, exactly like a manually pasted vacancy.
 - `matching.py` — scores a candidate against a job's actual requirement
   lines (not a flat keyword floor), weighting required lines far above
   preferred ones, and returns *which* lines matched/were missing.
@@ -66,11 +110,10 @@ adjust.
 1. **Hosting + real database + auth** — swap `storage.py`'s flat JSON file
    for Postgres/SQLite with per-client rows, deploy behind login. This is
    the biggest gap between "prototype" and "real product."
-2. **Job-board discovery** — vacancies are entered manually here as a test
-   harness for the matching logic. Real discovery means job-board APIs
-   (Greenhouse/Lever job board APIs are the most automation-friendly;
-   LinkedIn/Indeed are far more restrictive and detection-prone) or a
-   licensed data feed.
+2. ~~Job-board discovery~~ — **done in v3** via Adzuna. Worth extending
+   later with Greenhouse/Lever's public per-company APIs (see
+   ARCHITECTURE.md section 2) for specific target employers, and with a
+   second aggregator (e.g. Jooble) for broader coverage.
 3. **Real submission automation** — this only classifies whether a source
    *could* have an authorised route; it doesn't fill or submit forms on a
    live site. Any real automation here must respect each platform's ToS —
