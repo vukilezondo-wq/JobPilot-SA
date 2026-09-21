@@ -2,6 +2,7 @@ import json
 import os
 import smtplib
 from email.mime.text import MIMEText
+from email.utils import formataddr
 from pathlib import Path
 
 from discovery import search_adzuna
