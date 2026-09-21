@@ -45,8 +45,8 @@ def main():
         return
 
     seen = set(load_json(SEEN_PATH, []))
-    app_id = os.environ['ADZUNA_APP_ID']
-    app_key = os.environ['ADZUNA_APP_KEY']
+    app_id = os.environ['ADZUNA_APP_ID'].strip()
+    app_key = os.environ['ADZUNA_APP_KEY'].strip()
     location = candidate.get('location', 'South Africa')
 
     new_matches = []
